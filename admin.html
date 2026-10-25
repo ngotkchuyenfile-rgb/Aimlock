@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý Key - Optimizer</title>
+<style>
+  body { font-family: sans-serif; background:#0A0000; color:#fff; padding:16px; }
+  h2 { color:#FF3D5A; }
+  input, button { width:100%; padding:12px; margin-bottom:10px; box-sizing:border-box; font-size:15px; border-radius:8px; border:none; }
+  input { background:#1A0505; color:#fff; border:1px solid #FF1744; }
+  button { background:#FF1744; color:#fff; font-weight:bold; }
+  #result { white-space:pre-wrap; background:#1A0505; padding:12px; border-radius:8px; font-size:13px; margin-top:10px; word-break:break-all; }
+  .section { margin-bottom:30px; border-bottom:1px solid #333; padding-bottom:20px; }
+  label { font-size:13px; color:#CCA3A3; }
+</style>
+</head>
+<body>
+
+<h2>Quản lý Key - Optimizer</h2>
+
+<div class="section">
+  <label>Server URL (vd: https://your-server.onrender.com)</label>
+  <input id="serverUrl" placeholder="https://..." value="https://optimizerapp.onrender.com">
+  <label>Admin Secret</label>
+  <input id="adminSecret" type="password" placeholder="Chuỗi bí mật admin">
+</div>
+
+<div class="section">
+  <h3>Tạo key mới</h3>
+  <input id="note" placeholder="Ghi chú (tên khách, vd: Nguyen Van A)">
+  <label>Số ngày sử dụng (để trống hoặc 0 = vĩnh viễn)</label>
+  <input id="durationDays" type="number" placeholder="Vd: 30">
+  <button onclick="createKey()">Tạo Key</button>
+</div>
+
+<div class="section">
+  <h3>Thu hồi key</h3>
+  <input id="revokeKey" placeholder="Key cần thu hồi">
+  <button onclick="revokeKey()">Thu hồi</button>
+</div>
+
+<div class="section">
+  <h3>Xem tất cả key</h3>
+  <button onclick="listKeys()">Xem danh sách</button>
+</div>
+
+<div id="result">Kết quả sẽ hiện ở đây...</div>
+
+<script>
+function getBase() {
+  const url = document.getElementById('serverUrl').value.trim().replace(/\/$/, '');
+  return url;
+}
+function getSecret() {
+  return document.getElementById('adminSecret').value.trim();
+}
+function showResult(obj) {
+  document.getElementById('result').textContent = JSON.stringify(obj, null, 2);
+}
+
+async function createKey() {
+  const note = document.getElementById('note').value;
+  const durationDays = document.getElementById('durationDays').value;
+  try {
+    const res = await fetch(getBase() + '/admin/create-key', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': getSecret()
+      },
+      body: JSON.stringify({ note, durationDays })
+    });
+    const data = await res.json();
+    showResult(data);
+  } catch (e) {
+    showResult({ error: e.message });
+  }
+}
+
+async function revokeKey() {
+  const key = document.getElementById('revokeKey').value;
+  try {
+    const res = await fetch(getBase() + '/admin/revoke-key', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': getSecret()
+      },
+      body: JSON.stringify({ key })
+    });
+    const data = await res.json();
+    showResult(data);
+  } catch (e) {
+    showResult({ error: e.message });
+  }
+}
+
+async function listKeys() {
+  try {
+    const res = await fetch(getBase() + '/admin/keys', {
+      headers: { 'x-admin-secret': getSecret() }
+    });
+    const data = await res.json();
+    showResult(data);
+  } catch (e) {
+    showResult({ error: e.message });
+  }
+}
+</script>
+
+</body>
+</html>
